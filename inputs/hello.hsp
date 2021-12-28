@@ -1,3 +1,4 @@
 name = "K2"
 
-mes "hello, " + name
+mes "Hello, " + name + "!"
+
