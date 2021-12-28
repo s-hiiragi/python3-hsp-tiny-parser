@@ -187,14 +187,14 @@ class Parser():
                 break
             if tokens[i].tag == Token.EOF:
                 break
-            
+
             if m := self._match_expr(tokens[i:]):
                 args.append(m.value)
                 i += m.num_consumed
             else:
                 # TODO 任意の引数は省略できる
                 return
-            
+
             # TODO 引数の間にはカンマが必要
 
         func = Node.Atom(tokens[0])
@@ -225,7 +225,11 @@ class Parser():
             if tokens[i].src == '+' or tokens[i].src == '-':
                 i += 1
             else:
-                break
+                if len(operands) == 1:
+                    # +/-演算子が1つも無い場合はマッチ失敗とする
+                    return
+                else:
+                    break
 
             if m := self._match_atom(tokens[i:]):
                 operands.append(m.value)
