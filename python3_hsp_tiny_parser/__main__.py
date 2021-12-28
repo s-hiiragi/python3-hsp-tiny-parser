@@ -1,5 +1,18 @@
+import sys
 import argparse
-from .parser import Parser
+from .parser import Parser, ParseError
+import colorama
+from colorama import Fore, Back, Style
+
+
+def print_error(*args, **kwargs):
+    if len(args) >= 1:
+        exc_name = type(args[0]).__name__
+        args = list(args)
+        args[0] = Fore.RED + f'{exc_name}: ' + str(args[0]) + Style.RESET_ALL
+    if 'file' not in kwargs:
+        kwargs['file'] = sys.stderr
+    print(*args, **kwargs)
 
 
 def get_args():
@@ -9,10 +22,15 @@ def get_args():
 
 
 def main():
+    colorama.init()
+
     args = get_args()
 
     parser = Parser()
-    ast = parser.parse(args.srcfile)
+    try:
+        ast = parser.parse(args.srcfile)
+    except ParseError as e:
+        print_error(e)
 
 
 main()

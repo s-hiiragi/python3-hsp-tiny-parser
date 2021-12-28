@@ -6,6 +6,7 @@ authors = ["s_hiiragi <hiiragi.lab@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+colorama = "^0.4.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
