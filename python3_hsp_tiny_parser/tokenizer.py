@@ -62,13 +62,13 @@ class Token():
 
     def __repr__(self) -> str:
         if self.tag == self.TokenType.ID:
-            return self.src
+            return f'ID[{self.src}]'
         elif self.tag == self.TokenType.INT:
-            return self.src
+            return f'{self.src}'
         elif self.tag == self.TokenType.STR:
             return f'"{self.src}"'
         elif self.tag == self.TokenType.SIGN:
-            return self.src
+            return f'SIGN[{self.src}]'
         elif self.tag == self.TokenType.NEWLINE:
             return '\\n'
         elif self.tag == self.TokenType.EOF:
@@ -77,7 +77,10 @@ class Token():
             raise RuntimeError(f'__repr__: Unknown tag "{self.tag}"')
 
     def __format__(self, format_spec):
-        return format_spec.format(tag=self.tag, pos=self.pos, row=self.pos.row, column=self.pos.column, src=self.src)
+        if format_spec:
+            return format_spec.format(tag=self.tag, pos=self.pos, row=self.pos.row, column=self.pos.column, src=self.src)
+        else:
+            return repr(self)
 
 
 class TokenizeError(Exception):
