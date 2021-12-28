@@ -14,6 +14,7 @@ class Node():
         ARGS = auto()
         EXPR = auto()
         ADD_EXPR = auto()
+        SUB_EXPR = auto()
         ATOM = auto()
 
     TAG_TO_STR = {
@@ -24,6 +25,7 @@ class Node():
         NodeType.ARGS : 'Args',
         NodeType.EXPR : 'Expr',
         NodeType.ADD_EXPR : '+',
+        NodeType.SUB_EXPR : '-',
         NodeType.ATOM : 'Atom'
     }
 
@@ -64,6 +66,10 @@ class Node():
     @classmethod
     def AddExpr(cls, *tokens):
         return Node(cls.NodeType.ADD_EXPR, *tokens)
+
+    @classmethod
+    def SubExpr(cls, *tokens):
+        return Node(cls.NodeType.SUB_EXPR, *tokens)
 
     @classmethod
     def Atom(cls, *tokens):
@@ -141,7 +147,7 @@ class Parser():
 
         return Node.Stmts(*stmts)
 
-    def _match_stmt(self, tokens) -> Optional[MatchResult]:
+    def _match_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         methods = [
             self._match_empty_stmt,
             self._match_assign_stmt,
@@ -153,10 +159,10 @@ class Parser():
                 if tokens[m.num_consumed].tag == Token.TokenType.NEWLINE:
                     return MatchResult(m.value, m.num_consumed + 1)
 
-    def _match_empty_stmt(self, tokens) -> Optional[MatchResult]:
+    def _match_empty_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         return MatchResult(Node.EmptyStmt(), 0)
 
-    def _match_assign_stmt(self, tokens) -> Optional[MatchResult]:
+    def _match_assign_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 3:
             return
         if tokens[0].tag != Token.TokenType.ID:
@@ -166,6 +172,8 @@ class Parser():
 
         if m := self._match_expr(tokens[2:]):
             pass
+        elif m := self._match_atom(tokens[2:]):
+            pass
         else:
             return
 
@@ -173,7 +181,7 @@ class Parser():
         node = Node.AssignStmt(target, m.value)
         return MatchResult(node, 2 + m.num_consumed)
 
-    def _match_call_stmt(self, tokens) -> Optional[MatchResult]:
+    def _match_call_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 1:
             return
         if tokens[0].tag != Token.TokenType.ID:
@@ -201,14 +209,14 @@ class Parser():
         node = Node.CallStmt(func, Node.Args(*args))
         return MatchResult(node, i)
 
-    def _match_expr(self, tokens) -> Optional[MatchResult]:
+    def _match_expr(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 1:
             return
 
         if m := self._match_addexpr(tokens):
             return m
 
-    def _match_addexpr(self, tokens) -> Optional[MatchResult]:
+    def _match_addexpr(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 1:
             return
 
@@ -221,11 +229,13 @@ class Parser():
 
         i = 1
         n = len(tokens)
+        op = None
         while i < n:
             if tokens[i].src == '+' or tokens[i].src == '-':
+                op = tokens[i].src
                 i += 1
             else:
-                if len(operands) == 1:
+                if len(operands) == 1 and operands[0].tag == Node.NodeType.ATOM:
                     # +/-演算子が1つも無い場合はマッチ失敗とする
                     return
                 else:
@@ -233,14 +243,22 @@ class Parser():
 
             if m := self._match_atom(tokens[i:]):
                 operands.append(m.value)
+                # TODO operandsのオペランド2つを演算子ノードに包んでoperandsに入れる
+                if op == '+':
+                    node = Node.AddExpr(*operands)
+                else:
+                    node = Node.SubExpr(*operands)
+                operands = [node]
                 i += 1
             else:
+                print(2)
                 return
 
-        node = Node.AddExpr(*operands)
+        #node = Node.AddExpr(*operands)
+        node = operands[0]
         return MatchResult(node, i)
 
-    def _match_atom(self, tokens) -> Optional[MatchResult]:
+    def _match_atom(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 1:
             return
 
