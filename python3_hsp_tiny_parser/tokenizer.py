@@ -13,7 +13,7 @@ class Token():
         INT = auto()
         STR = auto()
         SIGN = auto()
-        # TODO セミコロンと改行は同じ扱いで良い？
+        # TODO コロンと改行は同じ扱いで良い？
         NEWLINE = auto()
         EOF = auto()
 
