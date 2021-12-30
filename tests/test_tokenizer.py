@@ -79,7 +79,21 @@ def test_dedupe_newline(tok, src):
     assert tokens[1] == EOF
 
 
-@pytest.mark.parametrize("src", ['"', '"str'])
-def test_invalid_newline(tok, src):
+@pytest.mark.parametrize("src", [';comment', '//comment'])
+def test_valid_line_comment(tok, src):
+    tokens = tok.tokenize(src)
+    assert len(tokens) == 1
+    assert tokens[0] == EOF
+
+
+@pytest.mark.parametrize("src", ['/**/', '/* comment */', '/* \n */'])
+def test_valid_block_comment(tok, src):
+    tokens = tok.tokenize(src)
+    assert len(tokens) == 1
+    assert tokens[0] == EOF
+
+
+@pytest.mark.parametrize("src", ['/*'])
+def test_invalid_block_comment(tok, src):
     with pytest.raises(TokenizeError) as e:
         __ = tok.tokenize(src)

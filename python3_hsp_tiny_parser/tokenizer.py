@@ -142,6 +142,45 @@ class Tokenizer():
                 i += 1
                 row += 1
                 column_origin = i
+            elif c == ';':
+                while i < n:
+                    c = src[i]
+                    if c == '\r' or c == '\n':
+                        break
+                    i += 1
+            elif c == '/' and i + 1 < n and src[i + 1] in ['/', '*']:
+                i += 1  # Skip '/'
+
+                if src[i] == '/':
+                    while i < n:
+                        c = src[i]
+                        if c == '\r' or c == '\n':
+                            break
+                        i += 1
+                else:
+                    i += 1  # Skip '*'
+                    if i >= n:
+                        raise TokenizeError('missing "*/"', pos)
+
+                    while i < n:
+                        if src[i] == '*':
+                            break
+                        elif src[i] in ['\r', '\n']:
+                            if src[i] == '\r':
+                                i += 1  # Skip '\r'
+                                if i >= n or i != '\n':
+                                    raise TokenizeError('missing LF', pos)
+                            i += 1  # Skip '\n'
+                            row += 1
+                            column_origin = i
+                        else:
+                            i += 1
+
+                    i += 1  # Skip '*'
+                    if i >= n or src[i] != '/':
+                        raise TokenizeError('missing "/"', pos)
+
+                    i += 1  # Skip '/'
             elif c == '"':
                 i += 1
 
