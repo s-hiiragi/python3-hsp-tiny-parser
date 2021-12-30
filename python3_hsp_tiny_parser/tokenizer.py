@@ -60,6 +60,12 @@ class Token():
     def EOF(cls, pos: TokenPosition):
         return Token(cls.TokenType.EOF, pos, '<EOF>')
 
+    def __eq__(self, tok):
+        return self.tag == tok.tag and self.src == tok.src
+
+    def __ne__(self, tok):
+        return not self.__eq__(tok)
+
     def __repr__(self) -> str:
         if self.tag == self.TokenType.ID:
             return f'ID[{self.src}]'
@@ -109,18 +115,23 @@ class Tokenizer():
         while i < n:
             pos = get_pos()
             c = src[i]
+
             if c in [' ', '\t']:
-                pass
+                i += 1
             elif c == '\n':
                 # 改行が連続する場合は1つまで追加する
                 if len(tokens) == 0 or tokens[-1].tag != Token.TokenType.NEWLINE:
                     tokens.append(Token.Newline(pos))
 
+                i += 1
                 row += 1
-                column_origin = i + 1
+                column_origin = i
             elif c == '\r':
                 # Skip CR
                 i += 1
+                if i >= n:
+                    raise TokenizeError('missing LF', pos)
+
                 if src[i] != '\n':
                     raise TokenizeError('missing LF', pos)
 
@@ -128,8 +139,9 @@ class Tokenizer():
                 if len(tokens) == 0 or tokens[-1].tag != Token.TokenType.NEWLINE:
                     tokens.append(Token.Newline(pos))
 
+                i += 1
                 row += 1
-                column_origin = i + 1
+                column_origin = i
             elif c == '"':
                 i += 1
 
@@ -146,22 +158,23 @@ class Tokenizer():
                     j += 1
                 if s is None:
                     raise TokenizeError('tokenize: missing closing \'"\'', pos)
-                i = j
+                i = j + 1
                 tokens.append(Token.Str(pos, s))
-            elif m := re.match(r'[1-9]\d*', src[i:]):
+            elif m := re.match(r'\d+', src[i:]):
                 s = m.group(0)
+                if len(s) >= 2 and s[0] == '0':
+                    raise TokenizeError(f'tokenize: invalid number \"{s}\"', pos)
                 tokens.append(Token.Int(pos, s))
-                i += len(s) - 1
+                i += len(s)
             elif m := re.match(r'[_a-zA-Z]\w*', src[i:]):
                 s = m.group(0)
                 tokens.append(Token.Id(pos, s))
-                i += len(s) - 1
+                i += len(s)
             elif c in self.ONE_CHARACTER_SIGNS:
                 tokens.append(Token.Sign(pos, c))
+                i += 1
             else:
                 raise TokenizeError(f'tokenize: unknown char \'{c}\'', pos)
-
-            i += 1
 
         tokens.append(Token.EOF(get_pos()))
 
