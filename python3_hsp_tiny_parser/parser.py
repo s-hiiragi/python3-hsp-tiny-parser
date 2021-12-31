@@ -91,13 +91,11 @@ def print_node(node, nestlevel=0):
     indent = '  ' * nestlevel
 
     if node.tag == Node.NodeType.ATOM:
-        node_str = f'Atom:{node}'
+        print(f'{indent}Atom:{node}')
+    elif len(node.tokens) == 0:
+        print(f'{indent}{node.tag_str()} []')
     else:
-        node_str = node.tag_str()
-
-    print(f'{indent}{node_str}')
-
-    if node.tag != Node.NodeType.ATOM:
+        print(f'{indent}{node.tag_str()}')
         for t in node.tokens:
             print_node(t, nestlevel+1)
 
@@ -140,7 +138,8 @@ class Parser():
         while tokens[i].tag != Token.TokenType.EOF:
 
             if m := self._match_stmt(tokens[i:]):
-                stmts.append(m.value)
+                if m.value.tag != Node.NodeType.EMPTY_STMT:  # Skip EmptyStmt
+                    stmts.append(m.value)
                 i += m.num_consumed
             else:
                 raise ParseError(f'''parse_tokens: unexpected token {format(tokens[i], '"{src}" (row:{row} column:{column})')}''')
@@ -156,10 +155,14 @@ class Parser():
 
         for match in methods:
             if m := match(tokens):
-                if tokens[m.num_consumed].tag == Token.TokenType.NEWLINE:
+                if tokens[m.num_consumed].tag == Token.TokenType.NEWLINE:  # Consume NEWLINE
                     return MatchResult(m.value, m.num_consumed + 1)
 
     def _match_empty_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
+        if len(tokens) < 1:
+            return
+        if tokens[0].tag != Token.TokenType.NEWLINE:
+            return
         return MatchResult(Node.EmptyStmt(), 0)
 
     def _match_assign_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
