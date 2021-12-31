@@ -1,5 +1,7 @@
 import sys
 import argparse
+
+from python3_hsp_tiny_parser.tokenizer import TokenizeError
 from .parser import Parser, ParseError
 import colorama
 from colorama import Fore, Back, Style
@@ -29,6 +31,8 @@ def main():
     parser = Parser()
     try:
         ast = parser.parse(args.srcfile)
+    except TokenizeError as e:
+        print_error(e)
     except ParseError as e:
         print_error(e)
 
