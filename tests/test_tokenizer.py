@@ -15,8 +15,9 @@ def test_init(tok):
     pass
 
 
-def test_empty(tok):
-    tokens = tok.tokenize('')
+@pytest.mark.parametrize('src', ['', ' ', '\t'])
+def test_valid_empty_code(tok, src):
+    tokens = tok.tokenize(src)
     assert len(tokens) == 1
     assert tokens[0] == EOF
 
@@ -86,14 +87,34 @@ def test_valid_line_comment(tok, src):
     assert tokens[0] == EOF
 
 
-@pytest.mark.parametrize("src", ['/**/', '/* comment */', '/* \n */'])
+@pytest.mark.parametrize("src", ['/**/', '/* comment */', '/* * */', '/* \n */', '/* \r\n */'])
 def test_valid_block_comment(tok, src):
     tokens = tok.tokenize(src)
     assert len(tokens) == 1
     assert tokens[0] == EOF
 
 
-@pytest.mark.parametrize("src", ['/*'])
+@pytest.mark.parametrize("src", ['/*', '/* \r */'])
 def test_invalid_block_comment(tok, src):
+    with pytest.raises(TokenizeError) as e:
+        __ = tok.tokenize(src)
+
+
+@pytest.mark.parametrize("src", ['\r\n', '\n'])
+def test_valid_newline(tok, src):
+    tokens = tok.tokenize(src)
+    assert len(tokens) == 2
+    assert tokens[0] == Token.Newline(POS)
+    assert tokens[1] == EOF
+
+@pytest.mark.parametrize("src", ['\r\n\r\n', '\n\n', '\r\n\n', '\n\r\n'])
+def test_multiple_newlines_are_deduped(tok, src):
+    tokens = tok.tokenize(src)
+    assert len(tokens) == 2
+    assert tokens[0] == Token.Newline(POS)
+    assert tokens[1] == EOF
+
+@pytest.mark.parametrize("src", ['\r'])
+def test_invalid_newline(tok, src):
     with pytest.raises(TokenizeError) as e:
         __ = tok.tokenize(src)

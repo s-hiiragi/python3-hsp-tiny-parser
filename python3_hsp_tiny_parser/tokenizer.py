@@ -161,6 +161,7 @@ class Tokenizer():
                     if i >= n:
                         raise TokenizeError('missing "*/"', get_pos())
 
+                    found = False
                     while i < n:
                         if src[i] == '*':
                             i += 1  # Skip '*'
@@ -168,11 +169,12 @@ class Tokenizer():
                                 break
                             if src[i] == '/':
                                 i += 1  # Skip '/'
+                                found = True
                                 break
                         elif src[i] in ['\r', '\n']:
                             if src[i] == '\r':
                                 i += 1  # Skip '\r'
-                                if i >= n or i != '\n':
+                                if i >= n or src[i] != '\n':
                                     raise TokenizeError('missing LF', get_pos())
                             i += 1  # Skip '\n'
                             row += 1
@@ -180,7 +182,7 @@ class Tokenizer():
                         else:
                             i += 1
 
-                    if i >= n:
+                    if not found:
                         raise TokenizeError('missing "*/"', get_pos())
             elif c == '"':
                 i += 1
@@ -199,7 +201,7 @@ class Tokenizer():
                 if s is None:
                     raise TokenizeError('tokenize: missing closing \'"\'', get_pos())
                 i = j + 1
-                tokens.append(Token.Str(pos, s))
+                tokens.append(Token.Str(get_pos(), s))
             elif m := re.match(r'\d+', src[i:]):
                 s = m.group(0)
                 if len(s) >= 2 and s[0] == '0':
