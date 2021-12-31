@@ -113,7 +113,6 @@ class Tokenizer():
             return TokenPosition(row, i - column_origin + 1)
 
         while i < n:
-            pos = get_pos()
             c = src[i]
 
             if c in [' ', '\t']:
@@ -121,7 +120,7 @@ class Tokenizer():
             elif c == '\n':
                 # 改行が連続する場合は1つまで追加する
                 if len(tokens) == 0 or tokens[-1].tag != Token.TokenType.NEWLINE:
-                    tokens.append(Token.Newline(pos))
+                    tokens.append(Token.Newline(get_pos()))
 
                 i += 1
                 row += 1
@@ -130,14 +129,14 @@ class Tokenizer():
                 # Skip CR
                 i += 1
                 if i >= n:
-                    raise TokenizeError('missing LF', pos)
+                    raise TokenizeError('missing LF', get_pos())
 
                 if src[i] != '\n':
-                    raise TokenizeError('missing LF', pos)
+                    raise TokenizeError('missing LF', get_pos())
 
                 # 改行が連続する場合は1つまで追加する
                 if len(tokens) == 0 or tokens[-1].tag != Token.TokenType.NEWLINE:
-                    tokens.append(Token.Newline(pos))
+                    tokens.append(Token.Newline(get_pos()))
 
                 i += 1
                 row += 1
@@ -160,7 +159,7 @@ class Tokenizer():
                 else:
                     i += 1  # Skip '*'
                     if i >= n:
-                        raise TokenizeError('missing "*/"', pos)
+                        raise TokenizeError('missing "*/"', get_pos())
 
                     while i < n:
                         if src[i] == '*':
@@ -169,7 +168,7 @@ class Tokenizer():
                             if src[i] == '\r':
                                 i += 1  # Skip '\r'
                                 if i >= n or i != '\n':
-                                    raise TokenizeError('missing LF', pos)
+                                    raise TokenizeError('missing LF', get_pos())
                             i += 1  # Skip '\n'
                             row += 1
                             column_origin = i
@@ -196,24 +195,24 @@ class Tokenizer():
                         j += 1
                     j += 1
                 if s is None:
-                    raise TokenizeError('tokenize: missing closing \'"\'', pos)
+                    raise TokenizeError('tokenize: missing closing \'"\'', get_pos())
                 i = j + 1
                 tokens.append(Token.Str(pos, s))
             elif m := re.match(r'\d+', src[i:]):
                 s = m.group(0)
                 if len(s) >= 2 and s[0] == '0':
-                    raise TokenizeError(f'tokenize: invalid number \"{s}\"', pos)
-                tokens.append(Token.Int(pos, s))
+                    raise TokenizeError(f'tokenize: invalid number \"{s}\"', get_pos())
+                tokens.append(Token.Int(get_pos(), s))
                 i += len(s)
             elif m := re.match(r'[_a-zA-Z]\w*', src[i:]):
                 s = m.group(0)
-                tokens.append(Token.Id(pos, s))
+                tokens.append(Token.Id(get_pos(), s))
                 i += len(s)
             elif c in self.ONE_CHARACTER_SIGNS:
-                tokens.append(Token.Sign(pos, c))
+                tokens.append(Token.Sign(get_pos(), c))
                 i += 1
             else:
-                raise TokenizeError(f'tokenize: unknown char \'{c}\'', pos)
+                raise TokenizeError(f'tokenize: unknown char \'{c}\'', get_pos())
 
         tokens.append(Token.EOF(get_pos()))
 
