@@ -1,0 +1,7 @@
+; line comment
+
+// line comment (C style)
+
+/*
+ * block comment
+ */

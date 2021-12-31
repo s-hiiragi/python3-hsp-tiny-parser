@@ -163,7 +163,12 @@ class Tokenizer():
 
                     while i < n:
                         if src[i] == '*':
-                            break
+                            i += 1  # Skip '*'
+                            if i >= n:
+                                break
+                            if src[i] == '/':
+                                i += 1  # Skip '/'
+                                break
                         elif src[i] in ['\r', '\n']:
                             if src[i] == '\r':
                                 i += 1  # Skip '\r'
@@ -175,11 +180,8 @@ class Tokenizer():
                         else:
                             i += 1
 
-                    i += 1  # Skip '*'
-                    if i >= n or src[i] != '/':
-                        raise TokenizeError('missing "/"', pos)
-
-                    i += 1  # Skip '/'
+                    if i >= n:
+                        raise TokenizeError('missing "*/"', get_pos())
             elif c == '"':
                 i += 1
 
