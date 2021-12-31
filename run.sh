@@ -5,6 +5,12 @@ function error() {
 	exit 1
 }
 
+DEBUG=0
+if [[ "$1" == "-d" ]]; then
+	DEBUG=1
+	shift
+fi
+
 INFILE="$1"
 
 if [[ ! -f "$INFILE" ]]; then
@@ -21,5 +27,9 @@ fi
 
 echo "INFILE: $INFILE" 1>&2
 
-poetry run python -m python3_hsp_tiny_parser "$INFILE"
+if [[ "$DEBUG" == "1" ]]; then
+	poetry run python -m pdb -c continue -m python3_hsp_tiny_parser "$INFILE"
+else
+	poetry run python -m python3_hsp_tiny_parser "$INFILE"
+fi
 
