@@ -99,7 +99,7 @@ def print_node(node, nestlevel=0):
     indent = '  ' * nestlevel
 
     if node.tag == Node.NodeType.ATOM:
-        print(f'{indent}Atom:{node}')
+        print(f'{indent}Atom:{node.value}')
     elif len(node.child_nodes) == 0:
         print(f'{indent}{node.tag_str()} []')
     else:
