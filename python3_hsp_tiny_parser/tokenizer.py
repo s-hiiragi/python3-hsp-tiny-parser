@@ -96,7 +96,7 @@ class TokenizeError(Exception):
 
 class Tokenizer():
 
-    ONE_CHARACTER_SIGNS = list('=+-')
+    ONE_CHARACTER_SIGNS = list('=+-*')
 
     def __init__(self):
         pass

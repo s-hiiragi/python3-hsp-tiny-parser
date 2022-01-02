@@ -9,6 +9,7 @@ class Node():
     class NodeType(Enum):
         STMTS = auto()
         EMPTY_STMT = auto()
+        LABEL_STMT = auto()
         ASSIGN_STMT = auto()
         CALL_STMT = auto()
         ARGS = auto()
@@ -20,6 +21,7 @@ class Node():
     TAG_TO_STR = {
         NodeType.STMTS : 'Stmts',
         NodeType.EMPTY_STMT : 'Empty',
+        NodeType.LABEL_STMT : 'Label',
         NodeType.ASSIGN_STMT : '=',
         NodeType.CALL_STMT : 'Call',
         NodeType.ARGS : 'Args',
@@ -46,6 +48,10 @@ class Node():
     @classmethod
     def EmptyStmt(cls):
         return Node(cls.NodeType.EMPTY_STMT, [])
+
+    @classmethod
+    def LabelStmt(cls, *tokens):
+        return Node(cls.NodeType.LABEL_STMT, *tokens)
 
     @classmethod
     def AssignStmt(cls, *tokens):
@@ -149,6 +155,7 @@ class Parser():
     def _match_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         methods = [
             self._match_empty_stmt,
+            self._match_label_stmt,
             self._match_assign_stmt,
             self._match_call_stmt,
         ]
@@ -164,6 +171,15 @@ class Parser():
         if tokens[0].tag != Token.TokenType.NEWLINE:
             return
         return MatchResult(Node.EmptyStmt(), 0)
+
+    def _match_label_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
+        if len(tokens) < 2:
+            return
+        if tokens[0].src != '*':
+            return
+        if tokens[1].tag != Token.TokenType.ID:
+            return
+        return MatchResult(Node.LabelStmt(Node.Atom(tokens[1])), 2)
 
     def _match_assign_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 3:
