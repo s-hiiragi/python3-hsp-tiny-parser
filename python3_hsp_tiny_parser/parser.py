@@ -14,6 +14,7 @@ class Node():
         ASSIGN_STMT = auto()
         CALL_STMT = auto()
         ARGS = auto()
+        DEFAULT = auto()
         EXPR = auto()
         ADD_EXPR = auto()
         SUB_EXPR = auto()
@@ -26,6 +27,7 @@ class Node():
         NodeType.ASSIGN_STMT : '=',
         NodeType.CALL_STMT : 'Call',
         NodeType.ARGS : 'Args',
+        NodeType.DEFAULT : 'Default',
         NodeType.EXPR : 'Expr',
         NodeType.ADD_EXPR : '+',
         NodeType.SUB_EXPR : '-',
@@ -66,6 +68,10 @@ class Node():
     @classmethod
     def Args(cls, *child_nodes):
         return Node(cls.NodeType.ARGS, *child_nodes)
+
+    @classmethod
+    def Default(cls):
+        return Node(cls.NodeType.DEFAULT)
 
     @classmethod
     def Expr(cls, *child_nodes):
@@ -225,7 +231,7 @@ class Parser():
         return MatchResult(node, 2 + m.num_consumed)
 
     def _match_call_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
-        if len(tokens) < 1:
+        if len(tokens) < 2:
             return
         if tokens[0].tag != Token.TokenType.ID:
             return
@@ -233,18 +239,31 @@ class Parser():
         args = []
         i = 1
         n = len(tokens)
+
+        if tokens[1].tag in [Token.TokenType.NEWLINE, Token.TokenType.EOF]:
+            pass
+        elif tokens[1].src == ',':
+            args.append(Node.Default())
+        elif m := self._match_expr(tokens[1:]):
+            args.append(m.value)
+            i += m.num_consumed
+        else:
+            return
+
         while i < n:
             if tokens[i].tag in [Token.TokenType.NEWLINE, Token.TokenType.EOF]:
                 break
+
+            if tokens[i].src != ',':
+                return
+
+            i += 1
 
             if m := self._match_expr(tokens[i:]):
                 args.append(m.value)
                 i += m.num_consumed
             else:
-                # TODO 任意の引数は省略できる
-                return
-
-            # TODO 引数の間にはカンマが必要
+                args.append(Node.Default())
 
         func = Node.Atom(value=tokens[0])
         node = Node.CallStmt(func, Node.Args(*args))
