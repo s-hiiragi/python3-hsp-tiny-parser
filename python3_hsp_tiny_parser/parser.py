@@ -32,9 +32,10 @@ class Node():
         NodeType.ATOM : 'Atom'
     }
 
-    def __init__(self, tag, *child_nodes):
+    def __init__(self, tag, *child_nodes, value=None):
         self.tag = tag
         self.child_nodes = child_nodes
+        self.value = value
 
     def tag_str(self):
         if self.tag not in self.TAG_TO_STR:
@@ -48,7 +49,7 @@ class Node():
 
     @classmethod
     def EmptyStmt(cls):
-        return Node(cls.NodeType.EMPTY_STMT, [])
+        return Node(cls.NodeType.EMPTY_STMT)
 
     @classmethod
     def LabelStmt(cls, *child_nodes):
@@ -79,8 +80,8 @@ class Node():
         return Node(cls.NodeType.SUB_EXPR, *child_nodes)
 
     @classmethod
-    def Atom(cls, *child_nodes):
-        return Node(cls.NodeType.ATOM, *child_nodes)
+    def Atom(cls, *, value):
+        return Node(cls.NodeType.ATOM, value=value)
 
     def __repr__(self):
         def join(child_nodes):
@@ -89,7 +90,7 @@ class Node():
         if len(self.child_nodes) == 0:
             return self.tag_str()
         elif self.tag == self.NodeType.ATOM:
-            return f'{self.child_nodes[0]}'
+            return f'{self.value}'
         else:
             return f'({self.tag_str()} {join(self.child_nodes)})'
 
@@ -182,7 +183,7 @@ class Parser():
             return
         if tokens[1].tag != Token.TokenType.ID:
             return
-        return MatchResult(Node.LabelStmt(Node.Atom(tokens[1])), 2)
+        return MatchResult(Node.LabelStmt(Node.Atom(value=tokens[1])), 2)
 
     def _match_assign_stmt(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 3:
@@ -199,7 +200,7 @@ class Parser():
         else:
             return
 
-        target = Node.Atom(tokens[0])
+        target = Node.Atom(value=tokens[0])
         node = Node.AssignStmt(target, m.value)
         return MatchResult(node, 2 + m.num_consumed)
 
@@ -227,7 +228,7 @@ class Parser():
 
             # TODO 引数の間にはカンマが必要
 
-        func = Node.Atom(tokens[0])
+        func = Node.Atom(value=tokens[0])
         node = Node.CallStmt(func, Node.Args(*args))
         return MatchResult(node, i)
 
@@ -291,5 +292,5 @@ class Parser():
         ]
 
         if tokens[0].tag in atom_tags:
-            node = Node.Atom(tokens[0])
+            node = Node.Atom(value=tokens[0])
             return MatchResult(node, 1)
