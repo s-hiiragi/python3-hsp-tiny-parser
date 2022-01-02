@@ -32,9 +32,9 @@ class Node():
         NodeType.ATOM : 'Atom'
     }
 
-    def __init__(self, tag, *tokens):
+    def __init__(self, tag, *child_nodes):
         self.tag = tag
-        self.tokens = tokens
+        self.child_nodes = child_nodes
 
     def tag_str(self):
         if self.tag not in self.TAG_TO_STR:
@@ -43,55 +43,55 @@ class Node():
         return self.TAG_TO_STR[self.tag]
 
     @classmethod
-    def Stmts(cls, *tokens):
-        return Node(cls.NodeType.STMTS, *tokens)
+    def Stmts(cls, *child_nodes):
+        return Node(cls.NodeType.STMTS, *child_nodes)
 
     @classmethod
     def EmptyStmt(cls):
         return Node(cls.NodeType.EMPTY_STMT, [])
 
     @classmethod
-    def LabelStmt(cls, *tokens):
-        return Node(cls.NodeType.LABEL_STMT, *tokens)
+    def LabelStmt(cls, *child_nodes):
+        return Node(cls.NodeType.LABEL_STMT, *child_nodes)
 
     @classmethod
-    def AssignStmt(cls, *tokens):
-        return Node(cls.NodeType.ASSIGN_STMT, *tokens)
+    def AssignStmt(cls, *child_nodes):
+        return Node(cls.NodeType.ASSIGN_STMT, *child_nodes)
 
     @classmethod
-    def CallStmt(cls, *tokens):
-        return Node(cls.NodeType.CALL_STMT, *tokens)
+    def CallStmt(cls, *child_nodes):
+        return Node(cls.NodeType.CALL_STMT, *child_nodes)
 
     @classmethod
-    def Args(cls, *tokens):
-        return Node(cls.NodeType.ARGS, *tokens)
+    def Args(cls, *child_nodes):
+        return Node(cls.NodeType.ARGS, *child_nodes)
 
     @classmethod
-    def Expr(cls, *tokens):
-        return Node(cls.NodeType.EXPR, *tokens)
+    def Expr(cls, *child_nodes):
+        return Node(cls.NodeType.EXPR, *child_nodes)
 
     @classmethod
-    def AddExpr(cls, *tokens):
-        return Node(cls.NodeType.ADD_EXPR, *tokens)
+    def AddExpr(cls, *child_nodes):
+        return Node(cls.NodeType.ADD_EXPR, *child_nodes)
 
     @classmethod
-    def SubExpr(cls, *tokens):
-        return Node(cls.NodeType.SUB_EXPR, *tokens)
+    def SubExpr(cls, *child_nodes):
+        return Node(cls.NodeType.SUB_EXPR, *child_nodes)
 
     @classmethod
-    def Atom(cls, *tokens):
-        return Node(cls.NodeType.ATOM, *tokens)
+    def Atom(cls, *child_nodes):
+        return Node(cls.NodeType.ATOM, *child_nodes)
 
     def __repr__(self):
-        def join(tokens):
-            return " ".join(map(str, tokens))
+        def join(child_nodes):
+            return " ".join(map(str, child_nodes))
 
-        if len(self.tokens) == 0:
+        if len(self.child_nodes) == 0:
             return self.tag_str()
         elif self.tag == self.NodeType.ATOM:
-            return f'{self.tokens[0]}'
+            return f'{self.child_nodes[0]}'
         else:
-            return f'({self.tag_str()} {join(self.tokens)})'
+            return f'({self.tag_str()} {join(self.child_nodes)})'
 
 
 def print_node(node, nestlevel=0):
@@ -99,11 +99,11 @@ def print_node(node, nestlevel=0):
 
     if node.tag == Node.NodeType.ATOM:
         print(f'{indent}Atom:{node}')
-    elif len(node.tokens) == 0:
+    elif len(node.child_nodes) == 0:
         print(f'{indent}{node.tag_str()} []')
     else:
         print(f'{indent}{node.tag_str()}')
-        for t in node.tokens:
+        for t in node.child_nodes:
             print_node(t, nestlevel+1)
 
 
