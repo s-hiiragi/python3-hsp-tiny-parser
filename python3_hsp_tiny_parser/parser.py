@@ -234,9 +234,7 @@ class Parser():
         i = 1
         n = len(tokens)
         while i < n:
-            if tokens[i].tag == Token.TokenType.NEWLINE:
-                break
-            if tokens[i].tag == Token.EOF:
+            if tokens[i].tag in [Token.TokenType.NEWLINE, Token.TokenType.EOF]:
                 break
 
             if m := self._match_expr(tokens[i:]):
