@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Union
 from enum import Enum, auto
+from pathlib import Path
 from collections import namedtuple
 from .tokenizer import Tokenizer, Token
 
@@ -122,9 +123,11 @@ class Parser():
         with open(srcfile, encoding='CP932') as f:
             return f.read()
 
-    def parse(self, srcfile: str) -> Node:
+    def parse_file(self, srcfile: Union[Path, str]) -> Node:
         src = self._read_srcfile(srcfile)
+        return self.parse_str(src)
 
+    def parse_str(self, src: str) -> Node:
         tokens = Tokenizer().tokenize(src)
         print('parse: tokens')
         print(tokens)

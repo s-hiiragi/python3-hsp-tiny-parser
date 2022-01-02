@@ -30,7 +30,7 @@ def main():
 
     parser = Parser()
     try:
-        ast = parser.parse(args.srcfile)
+        ast = parser.parse_file(args.srcfile)
     except TokenizeError as e:
         print_error(e)
     except ParseError as e:
