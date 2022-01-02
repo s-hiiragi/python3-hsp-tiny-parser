@@ -238,6 +238,8 @@ class Parser():
 
         if m := self._match_addexpr(tokens):
             return m
+        elif m := self._match_atom(tokens):
+            return m
 
     def _match_addexpr(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 1:
