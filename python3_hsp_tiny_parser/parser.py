@@ -83,7 +83,27 @@ class Node():
     def Atom(cls, *, value):
         return Node(cls.NodeType.ATOM, value=value)
 
-    def __repr__(self):
+    def __eq__(self, other) -> bool:
+        if self.tag != other.tag:
+            return False
+
+        if len(self.child_nodes) != len(other.child_nodes):
+            return False
+
+        if self.tag == Node.NodeType.ATOM:
+            if self.value != other.value:
+                return False
+        else:
+            for i in range(len(self.child_nodes)):
+                if self.child_nodes[i] != other.child_nodes[i]:
+                    return False
+
+        return True
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
+
+    def __repr__(self) -> str:
         def join(child_nodes):
             return " ".join(map(str, child_nodes))
 
