@@ -76,6 +76,18 @@ def test_assign_stmt(parser):
     assert ast == Stmts(AssignStmt(Atom(value=Id(POS, 'x')), Atom(value=Int(POS, '1'))))
 
 
-def test_call_stmt(parser):
+def test_call_stmt_with_0args(parser):
+    ast = parser.parse_str('x\n')
+    assert ast == Stmts(CallStmt(Atom(value=Id(POS, 'x')), Args()))
+
+
+def test_call_stmt_with_1arg(parser):
     ast = parser.parse_str('x 1\n')
     assert ast == Stmts(CallStmt(Atom(value=Id(POS, 'x')), Args(Atom(value=Int(POS, '1')))))
+
+
+def test_call_stmt_with_2args(parser):
+    ast = parser.parse_str('x 1, 2\n')
+    assert ast == Stmts(CallStmt(Atom(value=Id(POS, 'x')), Args(
+        Atom(value=Int(POS, '1')),
+        Atom(value=Int(POS, '2')))))
