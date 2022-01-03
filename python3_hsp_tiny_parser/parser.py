@@ -18,6 +18,7 @@ class Node():
         EXPR = auto()
         ADD_EXPR = auto()
         SUB_EXPR = auto()
+        LABEL_LITERAL = auto()
         ATOM = auto()
 
     TAG_TO_STR = {
@@ -31,6 +32,7 @@ class Node():
         NodeType.EXPR : 'Expr',
         NodeType.ADD_EXPR : '+',
         NodeType.SUB_EXPR : '-',
+        NodeType.LABEL_LITERAL : 'LabelLiteral',
         NodeType.ATOM : 'Atom'
     }
 
@@ -84,6 +86,10 @@ class Node():
     @classmethod
     def SubExpr(cls, *child_nodes):
         return Node(cls.NodeType.SUB_EXPR, *child_nodes)
+
+    @classmethod
+    def LabelLiteral(cls, *child_nodes):
+        return Node(cls.NodeType.LABEL_LITERAL, *child_nodes)
 
     @classmethod
     def Atom(cls, *, value):
@@ -275,6 +281,8 @@ class Parser():
 
         if m := self._match_addexpr(tokens):
             return m
+        elif m := self._match_label_literal(tokens):
+            return m
         elif m := self._match_atom(tokens):
             return m
 
@@ -319,6 +327,19 @@ class Parser():
         #node = Node.AddExpr(*operands)
         node = operands[0]
         return MatchResult(node, i)
+
+    def _match_label_literal(self, tokens: list[Token]) -> Optional[MatchResult]:
+        if len(tokens) < 2:
+            return
+
+        if tokens[0].src != '*':
+            return
+
+        if tokens[1].tag != Token.TokenType.ID:
+            return
+
+        node = Node.LabelLiteral(Node.Atom(value=tokens[1]))
+        return MatchResult(node, 2)
 
     def _match_atom(self, tokens: list[Token]) -> Optional[MatchResult]:
         if len(tokens) < 1:

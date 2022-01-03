@@ -1,2 +1,6 @@
 *main
+    sub_ = *sub
+    goto sub_
+
+*sub
     end
