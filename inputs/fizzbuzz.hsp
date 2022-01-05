@@ -1,0 +1,10 @@
+    repeat 100, 1
+        s = ""
+        if cnt \ 3 == 0 : s += "Fizz"
+        if cnt \ 5 == 0 : s += "Buzz"
+        if s == "" {
+            mes cnt
+        } else {
+            mes s
+        }
+    loop
