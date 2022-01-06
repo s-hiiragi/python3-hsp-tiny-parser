@@ -18,6 +18,9 @@ class Node():
         EXPR = auto()
         ADD_EXPR = auto()
         SUB_EXPR = auto()
+        MUL_EXPR = auto()
+        DIV_EXPR = auto()
+        MOD_EXPR = auto()
         LABEL_LITERAL = auto()
         ATOM = auto()
 
@@ -32,6 +35,9 @@ class Node():
         NodeType.EXPR : 'Expr',
         NodeType.ADD_EXPR : '+',
         NodeType.SUB_EXPR : '-',
+        NodeType.MUL_EXPR : '*',
+        NodeType.DIV_EXPR : '/',
+        NodeType.MOD_EXPR : '\\',
         NodeType.LABEL_LITERAL : 'LabelLiteral',
         NodeType.ATOM : 'Atom'
     }
@@ -86,6 +92,18 @@ class Node():
     @classmethod
     def SubExpr(cls, *child_nodes):
         return Node(cls.NodeType.SUB_EXPR, *child_nodes)
+
+    @classmethod
+    def MulExpr(cls, *child_nodes):
+        return Node(cls.NodeType.MUL_EXPR, *child_nodes)
+
+    @classmethod
+    def DivExpr(cls, *child_nodes):
+        return Node(cls.NodeType.DIV_EXPR, *child_nodes)
+
+    @classmethod
+    def ModExpr(cls, *child_nodes):
+        return Node(cls.NodeType.MOD_EXPR, *child_nodes)
 
     @classmethod
     def LabelLiteral(cls, *child_nodes):
@@ -227,8 +245,6 @@ class Parser():
 
         if m := self._match_expr(tokens[2:]):
             pass
-        elif m := self._match_atom(tokens[2:]):
-            pass
         else:
             return
 
@@ -279,17 +295,44 @@ class Parser():
         if len(tokens) < 1:
             return
 
-        if m := self._match_addexpr(tokens):
+        if m := self._match_add_expr(tokens):
             return m
         elif m := self._match_label_literal(tokens):
             return m
-        elif m := self._match_atom(tokens):
-            return m
 
-    def _match_addexpr(self, tokens: list[Token]) -> Optional[MatchResult]:
-        if len(tokens) < 1:
+    def _match_add_expr(self, tokens: list[Token]) -> Optional[MatchResult]:
+        operands = []
+
+        if m := self._match_mul_expr(tokens):
+            operands.append(m.value)
+        else:
             return
 
+        i = m.num_consumed
+        n = len(tokens)
+        op = None
+        while i < n:
+            if tokens[i].src in ['+', '-']:
+                op = tokens[i].src
+                i += 1
+            else:
+                break
+
+            if m := self._match_mul_expr(tokens[i:]):
+                operands.append(m.value)
+                if op == '+':
+                    node = Node.AddExpr(*operands)
+                else:
+                    node = Node.SubExpr(*operands)
+                operands = [node]
+                i += m.num_consumed
+            else:
+                return
+
+        node = operands[0]
+        return MatchResult(node, i)
+
+    def _match_mul_expr(self, tokens: list[Token]) -> Optional[MatchResult]:
         operands = []
 
         if m := self._match_atom(tokens):
@@ -297,34 +340,29 @@ class Parser():
         else:
             return
 
-        i = 1
+        i = m.num_consumed
         n = len(tokens)
         op = None
         while i < n:
-            if tokens[i].src == '+' or tokens[i].src == '-':
+            if tokens[i].src in ['*', '/', '\\']:
                 op = tokens[i].src
                 i += 1
             else:
-                if len(operands) == 1 and operands[0].tag == Node.NodeType.ATOM:
-                    # +/-演算子が1つも無い場合はマッチ失敗とする
-                    return
-                else:
                     break
 
             if m := self._match_atom(tokens[i:]):
                 operands.append(m.value)
-                # TODO operandsのオペランド2つを演算子ノードに包んでoperandsに入れる
-                if op == '+':
-                    node = Node.AddExpr(*operands)
+                if op == '*':
+                    node = Node.MulExpr(*operands)
+                elif op == '/':
+                    node = Node.DivExpr(*operands)
                 else:
-                    node = Node.SubExpr(*operands)
+                    node = Node.ModExpr(*operands)
                 operands = [node]
-                i += 1
+                i += m.num_consumed
             else:
-                print(2)
                 return
 
-        #node = Node.AddExpr(*operands)
         node = operands[0]
         return MatchResult(node, i)
 
@@ -342,8 +380,6 @@ class Parser():
         return MatchResult(node, 2)
 
     def _match_atom(self, tokens: list[Token]) -> Optional[MatchResult]:
-        if len(tokens) < 1:
-            return
 
         atom_tags = [
             Token.TokenType.ID,
