@@ -16,6 +16,12 @@ class Node():
         ARGS = auto()
         DEFAULT = auto()
         EXPR = auto()
+        EQ_EXPR = auto()
+        NEQ_EXPR = auto()
+        LT_EXPR = auto()
+        LTEQ_EXPR = auto()
+        GT_EXPR = auto()
+        GTEQ_EXPR = auto()
         ADD_EXPR = auto()
         SUB_EXPR = auto()
         MUL_EXPR = auto()
@@ -33,6 +39,12 @@ class Node():
         NodeType.ARGS : 'Args',
         NodeType.DEFAULT : 'Default',
         NodeType.EXPR : 'Expr',
+        NodeType.EQ_EXPR : '==',
+        NodeType.NEQ_EXPR : '!=',
+        NodeType.LT_EXPR : '<',
+        NodeType.LTEQ_EXPR : '<=',
+        NodeType.GT_EXPR : '>',
+        NodeType.GTEQ_EXPR : '>=',
         NodeType.ADD_EXPR : '+',
         NodeType.SUB_EXPR : '-',
         NodeType.MUL_EXPR : '*',
@@ -84,6 +96,30 @@ class Node():
     @classmethod
     def Expr(cls, *child_nodes):
         return Node(cls.NodeType.EXPR, *child_nodes)
+
+    @classmethod
+    def EqExpr(cls, *child_nodes):
+        return Node(cls.NodeType.EQ_EXPR, *child_nodes)
+
+    @classmethod
+    def NeqExpr(cls, *child_nodes):
+        return Node(cls.NodeType.NEQ_EXPR, *child_nodes)
+
+    @classmethod
+    def LtExpr(cls, *child_nodes):
+        return Node(cls.NodeType.LT_EXPR, *child_nodes)
+
+    @classmethod
+    def LtEqExpr(cls, *child_nodes):
+        return Node(cls.NodeType.LTEQ_EXPR, *child_nodes)
+
+    @classmethod
+    def GtExpr(cls, *child_nodes):
+        return Node(cls.NodeType.GT_EXPR, *child_nodes)
+
+    @classmethod
+    def GtEqExpr(cls, *child_nodes):
+        return Node(cls.NodeType.GTEQ_EXPR, *child_nodes)
 
     @classmethod
     def AddExpr(cls, *child_nodes):
@@ -295,10 +331,52 @@ class Parser():
         if len(tokens) < 1:
             return
 
-        if m := self._match_add_expr(tokens):
+        if m := self._match_comp_expr(tokens):
             return m
         elif m := self._match_label_literal(tokens):
             return m
+
+    def _match_comp_expr(self, tokens: list[Token]) -> Optional[MatchResult]:
+        operands = []
+
+        if m := self._match_add_expr(tokens):
+            operands.append(m.value)
+        else:
+            return
+
+        i = m.num_consumed
+        n = len(tokens)
+        op = None
+        while i < n:
+            if tokens[i].src in ['=', '==', '!', '!=', '<', '<=', '>', '>=']:
+                op = tokens[i].src
+                i += 1
+            else:
+                break
+
+            if m := self._match_add_expr(tokens[i:]):
+                operands.append(m.value)
+                if op in ['=', '==']:
+                    node = Node.EqExpr(*operands)
+                elif op in ['!', '!=']:
+                    node = Node.NeqExpr(*operands)
+                elif op == '<':
+                    node = Node.LtExpr(*operands)
+                elif op == '<=':
+                    node = Node.LtEqExpr(*operands)
+                elif op == '>':
+                    node = Node.GtExpr(*operands)
+                elif op == '>=':
+                    node = Node.GtEqExpr(*operands)
+                else:
+                    assert False
+                operands = [node]
+                i += m.num_consumed
+            else:
+                return
+
+        node = operands[0]
+        return MatchResult(node, i)
 
     def _match_add_expr(self, tokens: list[Token]) -> Optional[MatchResult]:
         operands = []

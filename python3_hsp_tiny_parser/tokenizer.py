@@ -95,7 +95,12 @@ class TokenizeError(Exception):
 
 class Tokenizer():
 
-    ONE_CHARACTER_SIGNS = list('=+-*/\\,')
+    # 乗除余演算子: * / \\
+    # 加減演算子: + -
+    # 比較演算子: = == ! != < <= > >=
+    # 論理演算子: & | ^
+    ONE_CHARACTER_SIGNS = tuple('=+-*/\\=<>!&|^,')
+    SOME_CHARACTER_SIGNS = ('==', '!=', '<=', '>=', '>>', '<<')
 
     def __init__(self):
         pass
@@ -211,11 +216,21 @@ class Tokenizer():
                 s = m.group(0)
                 tokens.append(Token.Id(get_pos(), s))
                 i += len(s)
-            elif c in self.ONE_CHARACTER_SIGNS:
-                tokens.append(Token.Sign(get_pos(), c))
-                i += 1
             else:
-                raise TokenizeError(f'tokenize: unknown char \'{c}\'', get_pos())
+                found = False
+                for sign in self.SOME_CHARACTER_SIGNS:
+                    if src[i:i+len(sign)] == sign:
+                        found = True
+                        tokens.append(Token.Sign(get_pos(), sign))
+                        i += len(sign)
+                        break
+
+                if not found:
+                    if c in self.ONE_CHARACTER_SIGNS:
+                        tokens.append(Token.Sign(get_pos(), c))
+                        i += 1
+                    else:
+                        raise TokenizeError(f'tokenize: unknown char \'{c}\'', get_pos())
 
         tokens.append(Token.EOF(get_pos()))
 
